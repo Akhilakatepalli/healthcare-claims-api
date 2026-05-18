@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: healthcare-claims-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: healthcare-claims-api
+  template:
+    metadata:
+      labels:
+        app: healthcare-claims-api
+    spec:
+      containers:
+      - name: healthcare-claims-api
+        image: us-central1-docker.pkg.dev/handson-claims-2026/claims-api-repo/healthcare-claims-api:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: MONGO_URI
+          valueFrom:
+            secretKeyRef:
+              name: mongodb-secret
+              key: uri
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 10
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"

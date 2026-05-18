@@ -1,0 +1,47 @@
+name: Build and Push Docker Image
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: ${{ secrets.AKHILA_GCP_SA_KEY }}
+
+    - name: Configure Docker for Artifact Registry
+      run: gcloud auth configure-docker us-central1-docker.pkg.dev
+
+    - name: Build Docker image
+      run: |
+        docker build -t us-central1-docker.pkg.dev/handson-claims-2026/claims-api-repo/healthcare-claims-api:${{ github.sha }} .
+        docker tag us-central1-docker.pkg.dev/handson-claims-2026/claims-api-repo/healthcare-claims-api:${{ github.sha }} us-central1-docker.pkg.dev/handson-claims-2026/claims-api-repo/healthcare-claims-api:latest
+
+    - name: Push Docker image
+      run: |
+        docker push us-central1-docker.pkg.dev/handson-claims-2026/claims-api-repo/healthcare-claims-api:${{ github.sha }}
+        docker push us-central1-docker.pkg.dev/handson-claims-2026/claims-api-repo/healthcare-claims-api:latest
+
+    - name: Update deployment.yaml with new image tag
+      run: |
+        sed -i "s|image: us-central1-docker.pkg.dev/handson-claims-2026/claims-api-repo/healthcare-claims-api:.*|image: us-central1-docker.pkg.dev/handson-claims-2026/claims-api-repo/healthcare-claims-api:${{ github.sha }}|g" k8s/deployment.yaml
+
+    - name: Commit and push updated deployment.yaml
+      run: |
+        git config user.email "github-actions@github.com"
+        git config user.name "GitHub Actions"
+        git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/Akhilakatepalli/healthcare-claims-api.git
+        git add k8s/deployment.yaml
+        git commit -m "Update image tag to ${{ github.sha }}" || echo "No changes to commit"
+        git push
