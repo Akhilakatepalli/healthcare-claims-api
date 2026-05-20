@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: healthcare-claims-api
-        image: us-central1-docker.pkg.dev/handson-claims-2026/claims-api-repo/healthcare-claims-api:202062d9d801669d449e055189c5e76dbe126954
+        image: us-central1-docker.pkg.dev/handson-claims-2026/claims-api-repo/healthcare-claims-api:66f58a9dba0b71f728379a8f47d6efea3efc21d1
         ports:
         - containerPort: 8080
         env:
