@@ -1,10 +1,20 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pymongo import MongoClient
 import os
 
 app = FastAPI(title="Healthcare Claims API")
 
-MONGO_URI = os.getenv("MONGO_URI", "mongodb+srv://akhilaakhikatepalli_db_user:lIV1iIhOhIQfryC5@cluster0.vkglb7m.mongodb.net/")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+MONGO_URI = os.getenv("MONGO_URI")
+if not MONGO_URI:
+    raise RuntimeError("MONGO_URI environment variable is not set")
 client = MongoClient(MONGO_URI, tlsAllowInvalidCertificates=True)
 db = client["healthcare_ops_db"]
 
